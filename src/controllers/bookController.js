@@ -1,6 +1,7 @@
 const bookModel = require("../models/bookModel")
 const userModel = require("../models/userModel")
 const reviewModel = require("../models/reviewModel")
+const aws= require("aws-sdk")
 
 
 
@@ -9,8 +10,45 @@ const {checkData,validString,isValidObjectId,validDate,} = require("../validator
 
 ////////////////////////////////////////////////////create Book////////////////////////////////////////////////////////////////////
 
+aws.config.update({
+  accessKeyId: "AKIAY3L35MCRVFM24Q7U",
+  secretAccessKeyId: "qGG1HE0qRixcW1T1Wg1bv+08tQrIkFVyDFqSft4J",
+  region: "ap-south-1"
+})
+
+let uploadFile= async ( file) =>{
+ return new Promise( function(resolve, reject) {
+  // this function will upload file to aws and return the link
+  let s3= new aws.S3({apiVersion: '2006-03-01'}); // we will be using the s3 service of aws
+
+  var uploadParams= {
+      ACL: "public-read",
+      Bucket: "classroom-training-bucket",  //HERE
+      Key: "abc/" + file.originalname, //HERE 
+      Body: file.buffer
+  }
+
+
+  s3.upload( uploadParams, function (err, data ){
+      if(err) {
+          return reject({"error": err})
+      }
+      console.log(data)
+      console.log("file uploaded succesfully")
+      return resolve(data.Location)
+  })
+
+  // let data= await s3.upload( uploadParams)
+  // if( data) return data.Location
+  // else return "there is an error"
+
+ })
+}
+
 const createBook = async function (req, res) {
-  try {
+   try {
+    let files= req.files
+    
     let data = req.body
 
     if (checkData(data)) return res.status(400).send({status: false,message: "Enter Books Details"})
@@ -22,6 +60,16 @@ const createBook = async function (req, res) {
     if (!data.ISBN) return res.status(400).send({status: false,message: "ISBN is required"})
     if (!data.category) return res.status(400).send({status: false,message: "category is required"})
     if (!data.subcategory) return res.status(400).send({status: false,message: "subcategory is required"})
+
+    if(files && files.length>0){
+      //upload to s3 and get the uploaded link
+      // res.send the link back to frontend/postman
+      let uploadedFileURL= await uploadFile( files[0] )
+      res.status(201).send({msg: "file uploaded succesfully", data: uploadedFileURL})
+  }
+  else{
+      res.status(400).send({ msg: "No file found" })
+  }
 
     //check the userId in model
     let data1 = data.userId
