@@ -1,7 +1,7 @@
 const bookModel = require("../models/bookModel")
 const userModel = require("../models/userModel")
 const reviewModel = require("../models/reviewModel")
-const aws= require("aws-sdk")
+const AWS= require("aws-sdk")
 
 
 
@@ -10,50 +10,50 @@ const {checkData,validString,isValidObjectId,validDate,} = require("../validator
 
 ////////////////////////////////////////////////////create Book////////////////////////////////////////////////////////////////////
 
-aws.config.update({
+AWS.config.update({
   accessKeyId: "AKIAY3L35MCRVFM24Q7U",
-  secretAccessKeyId: "qGG1HE0qRixcW1T1Wg1bv+08tQrIkFVyDFqSft4J",
+  secretAccessKey: "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",
   region: "ap-south-1"
 })
 
-let uploadFile= async ( file) =>{
- return new Promise( function(resolve, reject) {
-  // this function will upload file to aws and return the link
-  let s3= new aws.S3({apiVersion: '2006-03-01'}); // we will be using the s3 service of aws
+//   FILE  CREATION  IN  AWS  S3
+let uploadFile = async (file) => {
+  return new Promise(function (resolve, reject) {
+      let s3 = new AWS.S3({ apiVersion: '2006-03-01' });
+      let uploadParams = {
+          ACL: "public-read",
+          Bucket: "classroom-training-bucket",
+          //Key: "Group20/BookManagement/",
+          Key: "abc/" + file.originalname, //HERE
+          Body: file.buffer
+      };
+      s3.upload(uploadParams, function (err, data) {
+          if (err) {
+              console.log(reject(err))
+              return (reject({ "Error": err }))
 
-  var uploadParams= {
-      ACL: "public-read",
-      Bucket: "classroom-training-bucket",  //HERE
-      Key: "abc/" + file.originalname, //HERE 
-      Body: file.buffer
-  }
+          }
+           //console.log(resolve(data))
+           //console.log(data);
+          console.log("File Uploaded SuccessFully");
+          return resolve(data.Location)
+      });
 
+  });
 
-  s3.upload( uploadParams, function (err, data ){
-      if(err) {
-          return reject({"error": err})
-      }
-      console.log(data)
-      console.log("file uploaded succesfully")
-      return resolve(data.Location)
-  })
+};
 
-  // let data= await s3.upload( uploadParams)
-  // if( data) return data.Location
-  // else return "there is an error"
-
- })
-}
 
 const createBook = async function (req, res) {
-   try {
-     
+  //  try {
+
     let files= req.files
     if(files && files.length>0){
       //upload to s3 and get the uploaded link
       // res.send the link back to frontend/postman
-      let uploadedFileURL= await uploadFile( files[0] )
-      res.status(201).send({msg: "file uploaded succesfully", data: uploadedFileURL})
+      var uploadedFileURL= await uploadFile( files[0] )
+      console.log("ulpoadURL-->",uploadedFileURL)
+     // res.status(201).send({msg: "file uploaded succesfully", data: uploadedFileURL})
   }
   else{
       res.status(400).send({ msg: "No file found" })
@@ -87,12 +87,14 @@ const createBook = async function (req, res) {
     //set date in releasedAt
    if(validDate(data.releasedAt)) return res.status(400).send({status: false, message: "enter a valid released date in (YYYY-MM-DD) format"})
 
+   data.bookCover = uploadedFileURL
+
     //create book data
     let bookData = await bookModel.create(data)
     res.status(201).send({status: true,message: "Books created successfully",data: bookData})
-  } catch (err) {
-    res.status(500).send({status: false,Error: err.message})
-  }
+  // } catch (err) {
+  //   res.status(500).send({status: false,Error: err.message})
+  // }
 }
 
 ////////////////////////////////////////////////////get Book by query params////////////////////////////////////////////////////////
