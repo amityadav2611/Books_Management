@@ -14,8 +14,8 @@ router.post("/register", createUser )
 router.post("/login", loginUser)
 
 //book API
-//router.post("/create-aws", authentication, authorization, bookCover )
-router.post("/books", authentication, authorization, createBook )
+// router.post("/books", authentication, authorization, createBook )
+router.post("/books", authentication, createBook )
 router.get("/books", authentication, getFilteredBooks)
 router.get("/books/:bookId",authentication, getBookById)
 router.put("/books/:bookId",authentication, authorization,  updateBookDetails)

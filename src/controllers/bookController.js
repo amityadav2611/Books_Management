@@ -47,8 +47,18 @@ let uploadFile= async ( file) =>{
 
 const createBook = async function (req, res) {
    try {
+     
     let files= req.files
-    
+    if(files && files.length>0){
+      //upload to s3 and get the uploaded link
+      // res.send the link back to frontend/postman
+      let uploadedFileURL= await uploadFile( files[0] )
+      res.status(201).send({msg: "file uploaded succesfully", data: uploadedFileURL})
+  }
+  else{
+      res.status(400).send({ msg: "No file found" })
+  }
+
     let data = req.body
 
     if (checkData(data)) return res.status(400).send({status: false,message: "Enter Books Details"})
@@ -60,16 +70,6 @@ const createBook = async function (req, res) {
     if (!data.ISBN) return res.status(400).send({status: false,message: "ISBN is required"})
     if (!data.category) return res.status(400).send({status: false,message: "category is required"})
     if (!data.subcategory) return res.status(400).send({status: false,message: "subcategory is required"})
-
-    if(files && files.length>0){
-      //upload to s3 and get the uploaded link
-      // res.send the link back to frontend/postman
-      let uploadedFileURL= await uploadFile( files[0] )
-      res.status(201).send({msg: "file uploaded succesfully", data: uploadedFileURL})
-  }
-  else{
-      res.status(400).send({ msg: "No file found" })
-  }
 
     //check the userId in model
     let data1 = data.userId
