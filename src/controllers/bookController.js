@@ -23,7 +23,6 @@ let uploadFile = async (file) => {
       let uploadParams = {
           ACL: "public-read",
           Bucket: "classroom-training-bucket",
-          //Key: "Group20/BookManagement/",
           Key: "abc/" + file.originalname, //HERE
           Body: file.buffer
       };
@@ -52,7 +51,6 @@ const createBook = async function (req, res) {
       //upload to s3 and get the uploaded link
       // res.send the link back to frontend/postman
       var uploadedFileURL= await uploadFile( files[0] )
-      console.log("ulpoadURL-->",uploadedFileURL)
      // res.status(201).send({msg: "file uploaded succesfully", data: uploadedFileURL})
   }
   else{
